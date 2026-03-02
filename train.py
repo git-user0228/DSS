@@ -32,7 +32,6 @@ def set_seed(seed=42):
 
 def get_cmd():
     parser = argparse.ArgumentParser()
-    # experimental settings
     parser.add_argument("-g", "--gpu", default="0", type=str, help="which gpu to use")
     parser.add_argument("-d", "--dataset", default="iFashion", type=str,
                         help="which dataset to use, options:iFashion, steam")
@@ -312,7 +311,6 @@ def get_recall(pred, grd, is_hit, topk):
     hit_cnt = is_hit.sum(dim=1)
     num_pos = grd.sum(dim=1)
 
-    # remove those test cases who don't have any positive items
     denorm = pred.shape[0] - (num_pos == 0).sum().item()
     nomina = (hit_cnt / (num_pos + epsilon)).sum().item()
 

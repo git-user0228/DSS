@@ -49,10 +49,8 @@ def segment_softmax(src: torch.Tensor, index: torch.Tensor, num_segments: int, e
     if src.numel() == 0:
         return src
 
-    # max per segment (for stability)
     max_per = torch.full((num_segments,), -float("inf"), device=src.device, dtype=src.dtype)
 
-    # torch >= 2.0 supports scatter_reduce_
     if hasattr(max_per, "scatter_reduce_"):
         max_per.scatter_reduce_(0, index, src, reduce="amax", include_self=True)
     else:
@@ -96,35 +94,27 @@ class GATLayer(nn.Module):
         N = input_h.size(0)
         assert indptr.numel() == N + 1
 
-        # (可选) 输入特征 dropout
         x = F.dropout(input_h, p=self.dropout, training=self.training)
 
-        # linear
         h = x @ self.W  # [N, Fout]
         if self.bias is not None:
             h = h + self.bias
 
         E = indices.numel()
         if E == 0:
-            # 没有边：输出全 0（如果你想保留原特征，可在外面加 residual）
             return torch.zeros((N, self.out_features), device=h.device, dtype=h.dtype)
 
-        # CSR -> COO rows
-        row = self._csr_to_coo_row(indptr, N)  # [E]
-        col = indices  # [E]
+        row = self._csr_to_coo_row(indptr, N)
+        col = indices
 
-        # attention logits on edges: e_ij = LeakyReLU( a^T [h_i || h_j] )
-        a_src = self.a[:self.out_features, :]   # [Fout, 1]
-        a_dst = self.a[self.out_features:, :]   # [Fout, 1]
-        wh1 = (h @ a_src).squeeze(-1)           # [N]
-        wh2 = (h @ a_dst).squeeze(-1)           # [N]
-        e = F.leaky_relu(wh1[row] + wh2[col], negative_slope=self.alpha)  # [E]
+        a_src = self.a[:self.out_features, :]
+        a_dst = self.a[self.out_features:, :]
+        wh2 = (h @ a_dst).squeeze(-1)
+        e = F.leaky_relu(wh1[row] + wh2[col], negative_slope=self.alpha)
 
-        # softmax per row (source node)
-        attn = segment_softmax(e, row, num_segments=N)  # [E]
+        attn = segment_softmax(e, row, num_segments=N)
         attn = F.dropout(attn, p=self.dropout, training=self.training)
 
-        # aggregate: out[i] = sum_j attn_ij * h[j]
         out = torch.zeros((N, self.out_features), device=h.device, dtype=h.dtype)
         out.scatter_add_(0, row.unsqueeze(-1).expand(-1, self.out_features),
                          attn.unsqueeze(-1) * h[col])
@@ -162,12 +152,10 @@ class MGCBR(nn.Module):
 
         self.getGAT_graph()
 
-        # generate the graph without any dropouts for testing
         self.get_item_level_graph_ori()
         self.get_bundle_level_graph_ori()
         self.get_bundle_agg_graph_ori()
 
-        # generate the graph with the configured dropouts for training, if aug_type is OP or MD, the following graphs with be identical with the aboves
         self.get_item_level_graph()
         self.get_bundle_level_graph()
         self.get_bundle_agg_graph()
@@ -276,7 +264,7 @@ class MGCBR(nn.Module):
 
         for i in range(num_layers):
             features = torch.spmm(graph, features)
-            if self.conf["aug_type"] == "MD" and not test: # !!! important
+            if self.conf["aug_type"] == "MD" and not test:
                 features = mess_dropout(features)
 
             all_features.append(F.normalize(features, p=2, dim=1))
@@ -310,7 +298,6 @@ class MGCBR(nn.Module):
         else:
             IL_bundles_feature = torch.matmul(self.bundle_agg_graph, IL_items_feature)
 
-        # simple embedding dropout on bundle embeddings
         if self.conf["bundle_agg_ratio"] != 0 and self.conf["aug_type"] == "MD" and not test:
             IL_bundles_feature = self.bundle_agg_dropout(IL_bundles_feature)
 
@@ -319,14 +306,13 @@ class MGCBR(nn.Module):
 
     def propagate(self, test=False):
 
-        #  =============================  item level propagation  =============================
         if test:
             IL_users_feature, IL_items_feature = self.one_propagate(self.item_level_graph_ori, self.users_feature, self.items_feature, self.item_level_dropout, test, self.num_layers[0])
         else:
             IL_users_feature, IL_items_feature = self.one_propagate(self.item_level_graph, self.users_feature, self.items_feature, self.item_level_dropout, test, self.num_layers[0])
-        # aggregate the items embeddings within one bundle to obtain the bundle representation
+
         IL_bundles_feature = self.get_IL_bundle_rep(IL_items_feature, test)
-        #  ============================= bundle level propagation =============================
+
         if test:
             BL_users_feature, BL_bundles_feature = self.one_propagate(self.bundle_level_graph_ori, self.users_feature, self.bundles_feature, self.bundle_level_dropout, test, self.num_layers[1])
         else:
@@ -384,13 +370,9 @@ class MGCBR(nn.Module):
         return c_loss
 
     def cal_loss(self, users_feature, bundles_feature, mask_u, mask_b, u_ids, b_ids, pos_uu_samples, neg_uu_samples, pos_bb_samples, neg_bb_samples):
-        # IL: item_level, BL: bundle_level
-        # [bs, 1, emb_size]
 
         IL_users_feature, IL_items_feature, BL_users_feature, ML_users_feature, AL_users_feature = users_feature
-        # [bs, 1+neg_num, emb_size]
         IL_bundles_feature, BL_bundles_feature, ML_bundles_feature, AL_bundles_feature = bundles_feature
-        # [bs, 1+neg_num]
         pred = torch.sum(AL_users_feature * AL_bundles_feature, 2)
         bpr_loss = cal_bpr_loss(pred)
 
