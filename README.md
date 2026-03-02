@@ -16,4 +16,4 @@
 - **Saved checkpoints** (best model and associated config for each experiment): `./checkpoints/`
 
 ## Note
-- Due to upload limitations, the dataset used in this paper can be downloaded from [here](https://drive.google.com/file/d/1zGYmC67tini5rO7HdXAlCN3d7bILZO8Y/view?usp=sharing).Specific modality information can be obtained from the POG dataset.
+- Due to upload and storage limitations, the dataset used in this paper can be downloaded from [here](https://drive.google.com/file/d/1zGYmC67tini5rO7HdXAlCN3d7bILZO8Y/view?usp=sharing).Specific modality information can be obtained from the POG dataset or the Steam API using the item_id_map provided in the dataset.
