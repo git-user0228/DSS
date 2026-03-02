@@ -34,7 +34,7 @@ def get_cmd():
     parser = argparse.ArgumentParser()
     # experimental settings
     parser.add_argument("-g", "--gpu", default="0", type=str, help="which gpu to use")
-    parser.add_argument("-d", "--dataset", default="steam", type=str,
+    parser.add_argument("-d", "--dataset", default="iFashion", type=str,
                         help="which dataset to use, options:iFashion, steam")
     parser.add_argument("-m", "--model", default="MGCBR", type=str, help="which model to use, options: MGCBR")
     parser.add_argument("-i", "--info", default="", type=str,
@@ -72,9 +72,9 @@ def main():
     conf["device"] = device
     print(conf)
 
-    for lr, l2_reg, item_level_ratio, bundle_level_ratio, bundle_agg_ratio, embedding_size, num_layers, c_lambda, c_temp in \
+    for lr, l2_reg, item_level_ratio, bundle_level_ratio, bundle_agg_ratio, num_layers, c_lambda, c_temp in \
             product(conf['lrs'], conf['l2_regs'], conf['item_level_ratios'], conf['bundle_level_ratios'],
-                    conf['bundle_agg_ratios'], conf["embedding_sizes"], conf["num_layers"], conf["c_lambdas"],
+                    conf['bundle_agg_ratios'], conf["num_layers"], conf["c_lambdas"],
                     conf["c_temps"]):
         log_path = "./log/%s/%s" % (conf["dataset"], conf["model"])
         run_path = "./runs/%s/%s" % (conf["dataset"], conf["model"])
@@ -90,7 +90,6 @@ def main():
             os.makedirs(checkpoint_conf_path)
 
         conf["l2_reg"] = l2_reg
-        conf["embedding_size"] = embedding_size
 
         settings = []
         if conf["info"] != "":
@@ -102,8 +101,7 @@ def main():
         if conf["aug_type"] == "OP":
             assert item_level_ratio == 0 and bundle_level_ratio == 0 and bundle_agg_ratio == 0
 
-        settings += ["Neg_%d" % (conf["neg_num"]), str(conf["batch_size_train"]), str(lr), str(l2_reg),
-                     str(embedding_size)]
+        settings += ["Neg_%d" % (conf["neg_num"]), str(conf["batch_size_train"]), str(lr), str(l2_reg)]
 
         conf["item_level_ratio"] = item_level_ratio
         conf["bundle_level_ratio"] = bundle_level_ratio

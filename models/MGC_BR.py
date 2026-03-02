@@ -139,7 +139,6 @@ class MGCBR(nn.Module):
         device = self.conf["device"]
         self.device = device
 
-        self.embedding_size = conf["embedding_size"]
         self.embed_L2_norm = conf["l2_reg"]
         self.num_users = conf["num_users"]
         self.num_bundles = conf["num_bundles"]
@@ -155,8 +154,8 @@ class MGCBR(nn.Module):
         self.num_layers = self.conf["num_layers"]
         self.c_temp = self.conf["c_temp"]
 
-        self.gat_uu = GATLayer(self.embedding_size, self.embedding_size)
-        self.gat_bb = GATLayer(self.embedding_size, self.embedding_size)
+        self.gat_uu = GATLayer(256, 256)
+        self.gat_bb = GATLayer(256, 256)
 
         self.mask_uu_graph = self.get_mask_graph(self.uu_graph)
         self.mask_bb_graph = self.get_mask_graph(self.bb_graph)
@@ -181,11 +180,11 @@ class MGCBR(nn.Module):
         self.bundle_agg_dropout = nn.Dropout(self.conf["bundle_agg_ratio"], True)
 
     def init_emb(self):
-        self.users_feature = nn.Parameter(torch.FloatTensor(self.num_users, self.embedding_size))
+        self.users_feature = nn.Parameter(torch.FloatTensor(self.num_users, 256))
         nn.init.xavier_normal_(self.users_feature)
-        self.bundles_feature = nn.Parameter(torch.FloatTensor(self.num_bundles, self.embedding_size))
+        self.bundles_feature = nn.Parameter(torch.FloatTensor(self.num_bundles, 256))
         nn.init.xavier_normal_(self.bundles_feature)
-        self.items_feature = nn.Parameter(torch.FloatTensor(self.num_items, self.embedding_size))
+        self.items_feature = nn.Parameter(torch.FloatTensor(self.num_items, 256))
         nn.init.xavier_normal_(self.items_feature)
 
 

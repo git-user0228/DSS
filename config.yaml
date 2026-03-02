@@ -7,7 +7,6 @@ iFashion:
 
   aug_type: "Noise"
   ed_interval: 1
-  embedding_sizes: [256]
   num_layers: [[3, 1, 1]]
   lrs: [1.0e-3]
   item_level_ratios: [0.0]
@@ -34,7 +33,6 @@ steam:
 
   aug_type: "ED"
   ed_interval: 1
-  embedding_sizes: [256]
   num_layers: [[3, 2, 1]]
   lrs: [5.0e-3]
   item_level_ratios: [0]
