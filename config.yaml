@@ -1,0 +1,51 @@
+iFashion:
+  data_path: './datasets'
+  batch_size_train: 2048
+  batch_size_test: 2048
+  topk: [5, 10, 20]
+  neg_num: 1
+
+  aug_type: "Noise"
+  ed_interval: 1
+  embedding_sizes: [256]
+  num_layers: [[3, 1, 1]]
+  lrs: [1.0e-3]
+  item_level_ratios: [0.0]
+  bundle_level_ratios: [0.0]
+  bundle_agg_ratios: [0.0]
+  l2_regs: [4.0e-5]
+
+  c_lambdas: [0.15]
+  c_temps: [[0.1, 0.15]]
+
+  fusion_weights:
+    modal_weight: [ 0.8, 0.1, 0.1 ]
+
+  epochs: 50
+  test_interval: 1
+
+
+steam:
+  data_path: './datasets'
+  batch_size_train: 2048
+  batch_size_test: 2048
+  topk: [5, 10, 20]
+  neg_num: 1
+
+  aug_type: "ED"
+  ed_interval: 1
+  embedding_sizes: [256]
+  num_layers: [[3, 2, 1]]
+  lrs: [5.0e-3]
+  item_level_ratios: [0]
+  bundle_level_ratios: [0]
+  bundle_agg_ratios: [0]
+  l2_regs: [4.0e-5]
+
+  c_lambdas: [0.15]
+  c_temps: [[0.5, 0.15]]
+  fusion_weights:
+    modal_weight: [ 0.45, 0.5, 0.05 ]
+
+  epochs: 150
+  test_interval: 1
